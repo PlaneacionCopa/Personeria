@@ -114,6 +114,7 @@ export default function MisAsignaciones() {
                     <th className="px-4 py-3 text-left font-semibold">Nombre</th>
                     <th className="px-4 py-3 text-left font-semibold">Asunto</th>
                     <th className="px-4 py-3 text-left font-semibold">Espera</th>
+                    <th className="px-4 py-3 text-left font-semibold">Resp. límite</th>
                     <th className="px-4 py-3 text-left font-semibold">Estado</th>
                     <th className="px-4 py-3 text-left font-semibold">Acción</th>
                   </tr>
@@ -125,7 +126,8 @@ export default function MisAsignaciones() {
                       <td className="px-4 py-3">{item.documento}</td>
                       <td className="px-4 py-3">{item.nombre_completo}</td>
                       <td className="px-4 py-3">{item.asunto}</td>
-                      <td className="px-4 py-3">{item.tiempo_espera_minutos} min</td>
+                      <td className="px-4 py-3">{item.tiempo_espera_horas} h</td>
+                      <td className="px-4 py-3">{item.fecha_respuesta ?? "—"}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`rounded-lg border px-2 py-1 text-xs font-semibold ${ESTADO_COLOR[item.estado]}`}
@@ -168,7 +170,8 @@ export default function MisAsignaciones() {
               <div><b>Teléfono</b><div>{selected.telefono || "—"}</div></div>
               <div><b>Dirección</b><div>{selected.direccion || "—"}</div></div>
               <div><b>Hora de ingreso</b><div>{selected.hora_ingreso}</div></div>
-              <div><b>Tiempo de espera</b><div>{selected.tiempo_espera_minutos} min</div></div>
+              <div><b>Tiempo de espera</b><div>{selected.tiempo_espera_horas} h</div></div>
+              <div><b>Fecha límite de respuesta</b><div>{selected.fecha_respuesta ?? "—"}</div></div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

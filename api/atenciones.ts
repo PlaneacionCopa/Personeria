@@ -2,10 +2,12 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { db } from "./_db.js";
 import { requireRole, requireUser, HttpError } from "./_auth.js";
 import { allowCors, sendJson } from "./_http.js";
+import { addBusinessDaysColombia } from "./_colombia-fechas.js";
 
 const HORA_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 const TIPO_CASO_VALIDOS = ["NUEVO", "SEGUIMIENTO"];
 const ESTADOS_VALIDOS = ["ASIGNADO", "EN_SEGUIMIENTO", "FINALIZADO"];
+const DIAS_HABILES_RESPUESTA = 15;
 
 const SELECT_FIELDS = `
   a.id,
@@ -24,7 +26,8 @@ const SELECT_FIELDS = `
   to_char(a.fecha, 'YYYY-MM-DD') as fecha,
   to_char(a.hora_ingreso, 'HH24:MI') as hora_ingreso,
   to_char(a.hora_atencion, 'HH24:MI') as hora_atencion,
-  a.tiempo_espera_minutos,
+  a.tiempo_espera_horas,
+  a.fecha_respuesta,
   a.asignado_a,
   u.full_name as asignado_a_nombre,
   a.estado,
@@ -174,18 +177,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
+      const fechaRespuesta = addBusinessDaysColombia(new Date(), DIAS_HABILES_RESPUESTA);
+
       const r = await db().query(
         `
           insert into public.atenciones (
             documento, tipo_documento, nombre_completo, nacionalidad, edad,
             poblacion, telefono, correo, direccion, barrio_vereda,
             asunto, tipo_caso, hora_ingreso, hora_atencion,
-            asignado_a, estado, creado_por
+            asignado_a, estado, creado_por, fecha_respuesta
           ) values (
             $1, $2, $3, $4, $5,
             $6, $7, $8, $9, $10,
             $11, $12, $13, current_time,
-            $14, 'ASIGNADO', $15
+            $14, 'ASIGNADO', $15, $16
           )
           returning id
         `,
@@ -205,6 +210,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           String(body.hora_ingreso),
           String(body.asignado_a),
           requester.id,
+          fechaRespuesta,
         ]
       );
 

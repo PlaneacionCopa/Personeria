@@ -28,7 +28,8 @@ export type Atencion = {
   fecha: string;
   hora_ingreso: string;
   hora_atencion: string;
-  tiempo_espera_minutos: number | null;
+  tiempo_espera_horas: number | null;
+  fecha_respuesta: string | null;
   asignado_a: string;
   asignado_a_nombre?: string;
   estado: Estado;

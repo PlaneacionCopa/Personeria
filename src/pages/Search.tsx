@@ -100,6 +100,7 @@ export default function Search() {
                     <th className="px-4 py-3 text-left font-semibold">Nombre</th>
                     <th className="px-4 py-3 text-left font-semibold">Asunto</th>
                     <th className="px-4 py-3 text-left font-semibold">Asignado a</th>
+                    <th className="px-4 py-3 text-left font-semibold">Resp. límite</th>
                     <th className="px-4 py-3 text-left font-semibold">Estado</th>
                     <th className="px-4 py-3 text-left font-semibold">Observación</th>
                     <th className="px-4 py-3 text-left font-semibold">Acción</th>
@@ -113,6 +114,7 @@ export default function Search() {
                       <td className="px-4 py-3">{item.nombre_completo}</td>
                       <td className="px-4 py-3">{item.asunto}</td>
                       <td className="px-4 py-3">{item.asignado_a_nombre}</td>
+                      <td className="px-4 py-3">{item.fecha_respuesta ?? "—"}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`rounded-lg border px-2 py-1 text-xs font-semibold ${ESTADO_COLOR[item.estado]}`}
@@ -159,7 +161,8 @@ export default function Search() {
               <div><b>Asunto</b><div>{selected.asunto}</div></div>
               <div><b>Hora de ingreso</b><div>{selected.hora_ingreso}</div></div>
               <div><b>Hora de atención</b><div>{selected.hora_atencion}</div></div>
-              <div><b>Tiempo de espera</b><div>{selected.tiempo_espera_minutos} min</div></div>
+              <div><b>Tiempo de espera</b><div>{selected.tiempo_espera_horas} h</div></div>
+              <div><b>Fecha límite de respuesta</b><div>{selected.fecha_respuesta ?? "—"}</div></div>
               <div><b>Asignado a</b><div>{selected.asignado_a_nombre}</div></div>
               <div><b>Estado</b><div>{ESTADO_LABEL[selected.estado]}</div></div>
 
