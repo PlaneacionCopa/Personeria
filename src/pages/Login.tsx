@@ -5,7 +5,6 @@ import Input from "../components/Input";
 import Button from "../components/Button";
 
 import logoAlcaldia from "../../logos/logo-personeria.png";
-import logoTeEscuchamos from "../../logos/logo-personeria.png";
 
 export default function Login() {
   const nav = useNavigate();
@@ -69,11 +68,7 @@ export default function Login() {
               alt="Alcaldía de Copacabana"
               className="h-14 object-contain"
             />
-            <img
-              src={logoTeEscuchamos}
-              alt="Personería de Copacabana"
-              className="h-14 object-contain"
-            />
+           
           </div>
 
           <h1 className="text-4xl font-black tracking-tight">
