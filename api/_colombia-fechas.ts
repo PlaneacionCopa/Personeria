@@ -109,3 +109,28 @@ export function addBusinessDaysColombia(startDate: Date, days: number): string {
 
   return toISODate(current);
 }
+
+// Colombia no tiene horario de verano: siempre es UTC-5. Estas dos
+// funciones devuelven la fecha/hora ACTUAL en Colombia, para no depender
+// de la zona horaria que tenga configurada el servidor de base de datos.
+
+export function horaColombiaAhora(): string {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Bogota",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  return fmt.format(new Date());
+}
+
+export function fechaColombiaHoy(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
+}

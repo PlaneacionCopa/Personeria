@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { db } from "./_db.js";
 import { requireRole, requireUser, HttpError } from "./_auth.js";
 import { allowCors, sendJson } from "./_http.js";
-import { addBusinessDaysColombia } from "./_colombia-fechas.js";
+import { addBusinessDaysColombia, horaColombiaAhora, fechaColombiaHoy } from "./_colombia-fechas.js";
 
 const HORA_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 const TIPO_CASO_VALIDOS = ["NUEVO", "SEGUIMIENTO"];
@@ -27,7 +27,7 @@ const SELECT_FIELDS = `
   to_char(a.hora_ingreso, 'HH24:MI') as hora_ingreso,
   to_char(a.hora_atencion, 'HH24:MI') as hora_atencion,
   a.tiempo_espera_horas,
-  a.fecha_respuesta,
+  to_char(a.fecha_respuesta, 'YYYY-MM-DD') as fecha_respuesta,
   a.asignado_a,
   u.full_name as asignado_a_nombre,
   a.estado,
@@ -177,7 +177,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      const fechaRespuesta = addBusinessDaysColombia(new Date(), DIAS_HABILES_RESPUESTA);
+      const fechaHoy = fechaColombiaHoy();
+      const [y, m, d] = fechaHoy.split("-").map(Number);
+      const fechaRespuesta = addBusinessDaysColombia(new Date(y, m - 1, d), DIAS_HABILES_RESPUESTA);
+      const horaAtencionAhora = horaColombiaAhora();
 
       const r = await db().query(
         `
@@ -185,12 +188,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             documento, tipo_documento, nombre_completo, nacionalidad, edad,
             poblacion, telefono, correo, direccion, barrio_vereda,
             asunto, tipo_caso, hora_ingreso, hora_atencion,
-            asignado_a, estado, creado_por, fecha_respuesta
+            asignado_a, estado, creado_por, fecha_respuesta, fecha
           ) values (
             $1, $2, $3, $4, $5,
             $6, $7, $8, $9, $10,
-            $11, $12, $13, current_time,
-            $14, 'ASIGNADO', $15, $16
+            $11, $12, $13, $14,
+            $15, 'ASIGNADO', $16, $17, $18
           )
           returning id
         `,
@@ -208,9 +211,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           String(body.asunto),
           String(body.tipo_caso),
           String(body.hora_ingreso),
+          horaAtencionAhora,
           String(body.asignado_a),
           requester.id,
           fechaRespuesta,
+          fechaHoy,
         ]
       );
 
