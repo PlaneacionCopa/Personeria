@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NOTA: la aplicación usa consultas SQL directas (pg) contra estas mismas
+// tablas (ver /api). Este schema.prisma se mantiene como documentación /
+// referencia del modelo de datos, no se usa Prisma Client en tiempo de
+// ejecución.
+
+model AppUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  role         String // admin | secretario | funcionario
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  atencionesAsignadas Atencion[] @relation("AsignadoA")
+  atencionesCreadas   Atencion[] @relation("CreadoPor")
+
+  @@map("app_users")
+}
+
+model Atencion {
+  id String @id @default(uuid())
+
+  documento      String
+  tipoDocumento  String @map("tipo_documento")
+  nombreCompleto String @map("nombre_completo")
+  nacionalidad   String @default("COLOMBIANA")
+  edad           Int?
+  poblacion      String?
+  telefono       String?
+  correo         String?
+  direccion      String?
+  barrioVereda   String? @map("barrio_vereda")
+
+  asunto   String
+  tipoCaso String @default("NUEVO") @map("tipo_caso") // NUEVO | SEGUIMIENTO
+
+  fecha               DateTime @default(now()) @db.Date
+  horaIngreso          DateTime @map("hora_ingreso") @db.Time
+  horaAtencion         DateTime @default(now()) @map("hora_atencion") @db.Time
+  tiempoEsperaMinutos  Int?     @map("tiempo_espera_minutos")
+
+  asignadoAId String   @map("asignado_a")
+  asignadoA   AppUser  @relation("AsignadoA", fields: [asignadoAId], references: [id])
+  estado      String   @default("ASIGNADO") // ASIGNADO | EN_SEGUIMIENTO | FINALIZADO
+
+  saludo          String?
+  accionRealizada String? @map("accion_realizada")
+  observaciones   String?
+  expediente      String?
+  finAtencion     DateTime? @map("fin_atencion")
+
+  creadoPorId String?  @map("creado_por")
+  creadoPor   AppUser? @relation("CreadoPor", fields: [creadoPorId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("atenciones")
+}
