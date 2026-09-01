@@ -4,8 +4,8 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
-import logoAlcaldia from "../../logos/logoalcaldia.png";
-import logoTeEscuchamos from "../../logos/teescuchamos.png";
+import logoAlcaldia from "../../logos/logo-personeria.png";
+import logoTeEscuchamos from "../../logos/logo-personeria.png";
 
 export default function Login() {
   const nav = useNavigate();
