@@ -181,9 +181,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const fechaHoy = fechaColombiaHoy();
-      const [y, m, d] = fechaHoy.split("-").map(Number);
-      const fechaRespuesta = addBusinessDaysColombia(new Date(y, m - 1, d), DIAS_HABILES_RESPUESTA);
       const horaAtencionAhora = horaColombiaAhora();
+
+      // La fecha límite de respuesta NO se calcula aquí: el caso arranca
+      // "Asignado" sin plazo todavía, porque aún no se sabe bien de qué
+      // se trata. Se calcula cuando el funcionario lo pasa a "En seguimiento".
 
       const r = await db().query(
         `
@@ -191,12 +193,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             documento, tipo_documento, nombre_completo, nacionalidad, edad,
             poblacion, telefono, correo, direccion, barrio_vereda,
             asunto, tipo_caso, hora_ingreso, hora_atencion,
-            asignado_a, estado, creado_por, fecha_respuesta, fecha
+            asignado_a, estado, creado_por, fecha
           ) values (
             $1, $2, $3, $4, $5,
             $6, $7, $8, $9, $10,
             $11, $12, $13, $14,
-            $15, 'ASIGNADO', $16, $17, $18
+            $15, 'ASIGNADO', $16, $17
           )
           returning id
         `,
@@ -217,7 +219,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           horaAtencionAhora,
           String(body.asignado_a),
           requester.id,
-          fechaRespuesta,
           fechaHoy,
         ]
       );
@@ -246,7 +247,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const current = await db().query(
-        `select asignado_a, plazo_ampliado, tiempo_atencion_acumulado_minutos from public.atenciones where id = $1`,
+        `select asignado_a, estado, plazo_ampliado, fecha_respuesta, tiempo_atencion_acumulado_minutos from public.atenciones where id = $1`,
         [id]
       );
 
@@ -327,9 +328,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
+      let fechaRespuestaYaActualizada = false;
+
+      // Primera vez que el caso pasa a "En seguimiento": aquí arranca el
+      // plazo legal de respuesta (hoy + 15 días hábiles).
+      if (
+        body.estado === "EN_SEGUIMIENTO" &&
+        current.rows[0].estado !== "EN_SEGUIMIENTO" &&
+        !current.rows[0].fecha_respuesta
+      ) {
+        const fechaHoy = fechaColombiaHoy();
+        const [y, m, d] = fechaHoy.split("-").map(Number);
+        const fechaRespuestaInicial = addBusinessDaysColombia(
+          new Date(y, m - 1, d),
+          DIAS_HABILES_RESPUESTA
+        );
+
+        params.push(fechaRespuestaInicial);
+        sets.push(`fecha_respuesta = $${params.length}`);
+        fechaRespuestaYaActualizada = true;
+      }
+
       // "Necesito más tiempo": solo la primera vez que se marca (evita que
       // se reinicie el plazo cada vez que se guarda el seguimiento).
-      if (body.plazo_ampliado === true && !current.rows[0].plazo_ampliado) {
+      if (
+        body.plazo_ampliado === true &&
+        !current.rows[0].plazo_ampliado &&
+        !fechaRespuestaYaActualizada
+      ) {
         const fechaHoy = fechaColombiaHoy();
         const [y, m, d] = fechaHoy.split("-").map(Number);
         const nuevaFechaRespuesta = addBusinessDaysColombia(
@@ -341,6 +367,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sets.push(`plazo_ampliado = $${params.length}`);
         params.push(nuevaFechaRespuesta);
         sets.push(`fecha_respuesta = $${params.length}`);
+      } else if (body.plazo_ampliado === true && !current.rows[0].plazo_ampliado) {
+        // Ya se fijó fecha_respuesta arriba (arranque de seguimiento);
+        // igual marcamos plazo_ampliado para que no se pueda usar de nuevo.
+        params.push(true);
+        sets.push(`plazo_ampliado = $${params.length}`);
       }
 
       if (body.estado === "FINALIZADO") {
