@@ -7,6 +7,7 @@ import Crear from "../pages/Create";
 import Buscar from "../pages/Search";
 import MisAsignaciones from "../pages/MisAsignaciones";
 import Usuarios from "../pages/Usuarios";
+import Reportes from "../pages/Reportes";
 
 import type { Rol } from "../types/atencion";
 
@@ -77,6 +78,15 @@ export default function App() {
         element={
           <RequireAuth roles={["admin"]}>
             <Usuarios />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/reportes"
+        element={
+          <RequireAuth roles={["admin"]}>
+            <Reportes />
           </RequireAuth>
         }
       />

@@ -106,6 +106,9 @@ export default function BrandHeader() {
               <Button variant="ghost" onClick={() => go("/usuarios")}>
                 Usuarios
               </Button>
+              <Button variant="ghost" onClick={() => go("/reportes")}>
+                Reportes
+              </Button>
               <Button variant="ghost" onClick={handleDownload} disabled={downloading}>
                 {downloading ? "Descargando..." : "Descargar base"}
               </Button>

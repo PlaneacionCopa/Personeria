@@ -73,6 +73,18 @@ export default function Dashboard() {
               </Button>
             </Card>
           )}
+
+          {role === "admin" && (
+            <Card className="p-5">
+              <div className="text-sm font-semibold text-slate-700">Reportes</div>
+              <div className="text-xs text-slate-500 mt-1">
+                Reparto de casos por funcionario y por asunto, en el rango de fechas que elijas.
+              </div>
+              <Button variant="ghost" className="mt-4" onClick={() => nav("/reportes")}>
+                Ver reportes →
+              </Button>
+            </Card>
+          )}
         </div>
       </main>
     </div>
