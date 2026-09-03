@@ -62,6 +62,18 @@ export default function Dashboard() {
             </Card>
           )}
 
+          {role === "funcionario" && (
+            <Card className="p-5">
+              <div className="text-sm font-semibold text-slate-700">Buscar</div>
+              <div className="text-xs text-slate-500 mt-1">
+                Busca por documento — útil para tomar un caso si el titular no está.
+              </div>
+              <Button variant="ghost" className="mt-4" onClick={() => nav("/buscar")}>
+                Ir a buscar →
+              </Button>
+            </Card>
+          )}
+
           {role === "admin" && (
             <Card className="p-5">
               <div className="text-sm font-semibold text-slate-700">Usuarios</div>
