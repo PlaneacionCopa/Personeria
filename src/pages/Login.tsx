@@ -5,7 +5,7 @@ import Input from "../components/Input";
 import Button from "../components/Button";
 
 import logoPersoneria from "../../logos/logo-personeria.png";
-import fondoPersoneria from "../../logos/personeria-fondo.png";
+import fondoPersoneria from "../../logos/personeria-fondo.jpeg";
 
 export default function Login() {
   const nav = useNavigate();
