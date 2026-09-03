@@ -9,6 +9,20 @@ import {
   validarTamanoArchivo,
 } from "./_storage.js";
 
+// Supabase Storage no acepta espacios, tildes ni caracteres especiales en la
+// ruta del archivo. Esto limpia el nombre SOLO para la ruta interna de
+// almacenamiento; el nombre original (con tildes y espacios) se sigue
+// guardando tal cual en la base de datos para mostrarlo al usuario.
+function limpiarNombreParaStorage(nombre: string): string {
+  const sinAcentos = nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // quita tildes/diacríticos
+
+  return sinAcentos
+    .replace(/[^a-zA-Z0-9._-]/g, "_") // reemplaza cualquier otro carácter por "_"
+    .replace(/_+/g, "_"); // colapsa "_" repetidos
+}
+
 async function verificarAcceso(atencionId: string, userId: string, role: string) {
   const r = await db().query(
     `select asignado_a, creado_por from public.atenciones where id = $1`,
@@ -99,7 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const buffer = Buffer.from(dataBase64, "base64");
       validarTamanoArchivo(buffer.length);
 
-      const path = `${atencionId}/${randomUUID()}-${nombreOriginal}`;
+      const path = `${atencionId}/${randomUUID()}-${limpiarNombreParaStorage(nombreOriginal)}`;
       await subirArchivoStorage(path, buffer, tipoMime);
 
       const r = await db().query(
