@@ -10,6 +10,12 @@ const emptyNuevo = {
   observaciones: "",
 };
 
+function adelanto(s: Seguimiento, max = 60) {
+  const texto = s.sintesis_caso || s.accion_realizada || s.pregunta_problema || s.observaciones || "";
+  if (!texto) return "(sin detalle)";
+  return texto.length > max ? texto.slice(0, max) + "..." : texto;
+}
+
 export default function HiloSeguimientos({
   atencionId,
   onNuevaVisita,
@@ -23,6 +29,7 @@ export default function HiloSeguimientos({
   const [guardando, setGuardando] = useState(false);
   const [nuevo, setNuevo] = useState(emptyNuevo);
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [expandidoId, setExpandidoId] = useState<string | null>(null);
 
   async function cargar() {
     setLoading(true);
@@ -30,6 +37,11 @@ export default function HiloSeguimientos({
     try {
       const r = await listarSeguimientos(atencionId);
       setItems(r.items);
+      // Si es la primera vez (todavía no hay ninguna visita), abre el
+      // formulario de una vez en lugar de esconderlo detrás de un botón.
+      if (r.items.length === 0) {
+        setMostrarForm(true);
+      }
     } catch (e: any) {
       setError(e?.message ?? "Error cargando el hilo");
     } finally {
@@ -62,7 +74,7 @@ export default function HiloSeguimientos({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <div className="text-sm font-semibold text-slate-700">
-          Hilo de visitas ({items.length})
+          {items.length === 0 ? "Registro de esta atención" : `Hilo de visitas (${items.length})`}
         </div>
         {!mostrarForm && (
           <button
@@ -82,32 +94,48 @@ export default function HiloSeguimientos({
       )}
 
       {!loading && items.length > 0 && (
-        <div className="space-y-3">
-          {items.map((s) => (
-            <div key={s.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-              <div className="mb-1 flex flex-wrap items-center justify-between gap-1 text-xs text-slate-500">
-                <span>
-                  {s.fecha} · {s.hora}
-                  {s.funcionario_nombre ? ` · ${s.funcionario_nombre}` : ""}
-                </span>
+        <div className="space-y-2">
+          {[...items].reverse().map((s) => {
+            const abierto = expandidoId === s.id;
+            return (
+              <div key={s.id} className="rounded-xl border border-slate-200 bg-slate-50 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setExpandidoId(abierto ? null : s.id)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="text-xs text-slate-500">
+                      {s.fecha} · {s.hora}
+                      {s.funcionario_nombre ? ` · ${s.funcionario_nombre}` : ""}
+                    </span>
+                    <span className="ml-2 text-slate-700">{adelanto(s)}</span>
+                  </span>
+                  <span className="shrink-0 text-slate-400">{abierto ? "▲" : "▼"}</span>
+                </button>
+
+                {abierto && (
+                  <div className="border-t border-slate-200 px-3 py-2">
+                    {s.sintesis_caso && (
+                      <div className="mb-1"><b>Síntesis:</b> {s.sintesis_caso}</div>
+                    )}
+                    {s.pregunta_problema && (
+                      <div className="mb-1"><b>Pregunta / problema:</b> {s.pregunta_problema}</div>
+                    )}
+                    {s.metodologia && (
+                      <div className="mb-1"><b>Metodología:</b> {s.metodologia}</div>
+                    )}
+                    {s.accion_realizada && (
+                      <div className="mb-1"><b>Acción realizada:</b> {s.accion_realizada}</div>
+                    )}
+                    {s.observaciones && (
+                      <div><b>Observaciones:</b> {s.observaciones}</div>
+                    )}
+                  </div>
+                )}
               </div>
-              {s.sintesis_caso && (
-                <div className="mb-1"><b>Síntesis:</b> {s.sintesis_caso}</div>
-              )}
-              {s.pregunta_problema && (
-                <div className="mb-1"><b>Pregunta / problema:</b> {s.pregunta_problema}</div>
-              )}
-              {s.metodologia && (
-                <div className="mb-1"><b>Metodología:</b> {s.metodologia}</div>
-              )}
-              {s.accion_realizada && (
-                <div className="mb-1"><b>Acción realizada:</b> {s.accion_realizada}</div>
-              )}
-              {s.observaciones && (
-                <div><b>Observaciones:</b> {s.observaciones}</div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
