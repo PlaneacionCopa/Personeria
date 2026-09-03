@@ -4,6 +4,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import Select from "../components/Select";
+import AdjuntosPanel from "../components/AdjuntosPanel";
 import {
   actualizarSeguimiento,
   finalizarSesionAtencion,
@@ -205,6 +206,7 @@ export default function MisAsignaciones() {
               <div><b>Teléfono</b><div>{selected.telefono || "—"}</div></div>
               <div><b>Dirección</b><div>{selected.direccion || "—"}</div></div>
               <div><b>Hora de ingreso</b><div>{selected.hora_ingreso}</div></div>
+              <div><b>Canal de ingreso</b><div>{selected.canal ?? "—"}</div></div>
               <div><b>Fecha límite de respuesta</b><div>{selected.fecha_respuesta ?? "—"}</div></div>
               <div><b>Tiempo total de atención (acumulado)</b><div>{formatMinutos(selected.tiempo_atencion_acumulado_minutos)}</div></div>
             </div>
@@ -275,6 +277,10 @@ export default function MisAsignaciones() {
                   onChange={(e) => setSelected({ ...selected, observaciones: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <AdjuntosPanel atencionId={selected.id} puedeSubir />
             </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">

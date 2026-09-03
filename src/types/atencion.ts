@@ -25,6 +25,7 @@ export type Atencion = {
   barrio_vereda: string | null;
   asunto: string;
   tipo_caso: TipoCaso;
+  canal: string | null;
   fecha: string;
   hora_ingreso: string;
   hora_atencion: string;
@@ -59,6 +60,7 @@ export type NuevaAtencionInput = {
   barrio_vereda: string;
   asunto: string;
   tipo_caso: TipoCaso;
+  canal: string;
   hora_ingreso: string;
   asignado_a: string;
 };
@@ -69,6 +71,7 @@ export type Tipificaciones = {
   poblacion: string[];
   asunto: string[];
   tipo_caso: TipoCaso[];
+  canal: string[];
   estado: Estado[];
   barrio_vereda: string[];
 };

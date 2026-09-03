@@ -4,6 +4,7 @@ import BrandHeader from "../components/BrandHeader";
 import Card from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
+import AdjuntosPanel from "../components/AdjuntosPanel";
 import { searchByDocumento } from "../services/atenciones";
 import type { Atencion } from "../types/atencion";
 
@@ -161,6 +162,7 @@ export default function Search() {
               <div><b>Asunto</b><div>{selected.asunto}</div></div>
               <div><b>Hora de ingreso</b><div>{selected.hora_ingreso}</div></div>
               <div><b>Hora de atención</b><div>{selected.hora_atencion}</div></div>
+              <div><b>Canal de ingreso</b><div>{selected.canal ?? "—"}</div></div>
               <div><b>Fecha límite de respuesta</b><div>{selected.fecha_respuesta ?? "—"}</div></div>
               <div><b>Plazo ampliado</b><div>{selected.plazo_ampliado ? "Sí" : "No"}</div></div>
               <div><b>Asignado a</b><div>{selected.asignado_a_nombre}</div></div>
@@ -172,6 +174,10 @@ export default function Search() {
                   {selected.observaciones || "—"}
                 </div>
               </div>
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <AdjuntosPanel atencionId={selected.id} />
             </div>
           </div>
         </div>

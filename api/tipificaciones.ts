@@ -118,6 +118,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     tipo_caso: ["NUEVO", "SEGUIMIENTO"],
 
+    canal: [
+      "PRESENCIAL",
+      "TELEFÓNICO",
+      "CORREO ELECTRÓNICO",
+      "ESCRITO / RADICADO",
+      "WHATSAPP",
+      "VISITA DOMICILIARIA",
+      "OTRO",
+    ],
+
     estado: ["ASIGNADO", "EN_SEGUIMIENTO", "FINALIZADO"],
 
     barrio_vereda: BARRIOS_VEREDAS,

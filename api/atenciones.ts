@@ -23,6 +23,7 @@ const SELECT_FIELDS = `
   a.barrio_vereda,
   a.asunto,
   a.tipo_caso,
+  a.canal,
   to_char(a.fecha, 'YYYY-MM-DD') as fecha,
   to_char(a.hora_ingreso, 'HH24:MI') as hora_ingreso,
   to_char(a.hora_atencion, 'HH24:MI') as hora_atencion,
@@ -192,13 +193,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           insert into public.atenciones (
             documento, tipo_documento, nombre_completo, nacionalidad, edad,
             poblacion, telefono, correo, direccion, barrio_vereda,
-            asunto, tipo_caso, hora_ingreso, hora_atencion,
+            asunto, tipo_caso, canal, hora_ingreso, hora_atencion,
             asignado_a, estado, creado_por, fecha
           ) values (
             $1, $2, $3, $4, $5,
             $6, $7, $8, $9, $10,
-            $11, $12, $13, $14,
-            $15, 'ASIGNADO', $16, $17
+            $11, $12, $13, $14, $15,
+            $16, 'ASIGNADO', $17, $18
           )
           returning id
         `,
@@ -215,6 +216,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           body.barrio_vereda ? String(body.barrio_vereda) : null,
           String(body.asunto),
           String(body.tipo_caso),
+          body.canal ? String(body.canal) : null,
           String(body.hora_ingreso),
           horaAtencionAhora,
           String(body.asignado_a),
