@@ -30,6 +30,9 @@ export type Atencion = {
   hora_atencion: string;
   tiempo_espera_horas: number | null;
   fecha_respuesta: string | null;
+  plazo_ampliado: boolean;
+  tiempo_atencion_acumulado_minutos: number;
+  ultima_sesion_fin: string | null;
   asignado_a: string;
   asignado_a_nombre?: string;
   estado: Estado;

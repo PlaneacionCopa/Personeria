@@ -4,7 +4,8 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
-import logoAlcaldia from "../../logos/logo-personeria.png";
+import logoPersoneria from "../../logos/logo-personeria.png";
+import fondoPersoneria from "../../logos/personeria-fondo.png";
 
 export default function Login() {
   const nav = useNavigate();
@@ -59,16 +60,19 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 lg:grid-cols-2">
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${fondoPersoneria})` }}
+    >
+      <div className="min-h-screen bg-gradient-to-br from-brand-900/90 via-brand-800/85 to-brand-700/80">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 lg:grid-cols-2">
         <div className="text-white">
           <div className="mb-6 flex items-center gap-6">
             <img
-              src={logoAlcaldia}
-              alt="Alcaldía de Copacabana"
+              src={logoPersoneria}
+              alt="Personería Municipal de Copacabana"
               className="h-14 object-contain"
             />
-           
           </div>
 
           <h1 className="text-4xl font-black tracking-tight">
@@ -103,6 +107,7 @@ export default function Login() {
             </Button>
           </form>
         </Card>
+        </div>
       </div>
     </div>
   );

@@ -4,8 +4,20 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import Select from "../components/Select";
-import { actualizarSeguimiento, getTipificaciones, misAtenciones } from "../services/atenciones";
+import {
+  actualizarSeguimiento,
+  finalizarSesionAtencion,
+  getTipificaciones,
+  misAtenciones,
+} from "../services/atenciones";
 import type { Atencion, Estado, Tipificaciones } from "../types/atencion";
+
+function formatMinutos(min: number) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m} min`;
+  return `${h} h ${m} min`;
+}
 
 const TABS: { value: Estado | "TODOS"; label: string }[] = [
   { value: "ASIGNADO", label: "Nuevos" },
@@ -26,6 +38,8 @@ export default function MisAsignaciones() {
   const [loading, setLoading] = useState(false);
   const [tips, setTips] = useState<Tipificaciones | null>(null);
   const [selected, setSelected] = useState<Atencion | null>(null);
+  const [sessionStart, setSessionStart] = useState<Date | null>(null);
+  const [finalizandoSesion, setFinalizandoSesion] = useState(false);
 
   useEffect(() => {
     getTipificaciones().then(setTips).catch(() => {});
@@ -50,6 +64,7 @@ export default function MisAsignaciones() {
 
   function openDetalle(item: Atencion) {
     setSelected({ ...item });
+    setSessionStart(new Date());
   }
 
   async function guardarSeguimiento() {
@@ -62,12 +77,32 @@ export default function MisAsignaciones() {
         accion_realizada: selected.accion_realizada ?? "",
         observaciones: selected.observaciones ?? "",
         expediente: selected.expediente ?? "",
+        plazo_ampliado: selected.plazo_ampliado,
       });
 
       setSelected(null);
       load();
     } catch (e: any) {
       alert(e?.message ?? "Error guardando seguimiento");
+    }
+  }
+
+  async function handleFinalizarSesion() {
+    if (!selected || !sessionStart) return;
+    setFinalizandoSesion(true);
+
+    try {
+      const r = await finalizarSesionAtencion(selected.id, sessionStart.toISOString());
+      alert(
+        `Atención de hoy registrada: ${formatMinutos(r.minutosSesion)}.\n` +
+          `Total acumulado en este caso: ${formatMinutos(r.item.tiempo_atencion_acumulado_minutos)}.`
+      );
+      setSelected(null);
+      load();
+    } catch (e: any) {
+      alert(e?.message ?? "Error registrando la atención de hoy");
+    } finally {
+      setFinalizandoSesion(false);
     }
   }
 
@@ -115,6 +150,7 @@ export default function MisAsignaciones() {
                     <th className="px-4 py-3 text-left font-semibold">Asunto</th>
                     <th className="px-4 py-3 text-left font-semibold">Espera</th>
                     <th className="px-4 py-3 text-left font-semibold">Resp. límite</th>
+                    <th className="px-4 py-3 text-left font-semibold">T. atención</th>
                     <th className="px-4 py-3 text-left font-semibold">Estado</th>
                     <th className="px-4 py-3 text-left font-semibold">Acción</th>
                   </tr>
@@ -128,6 +164,7 @@ export default function MisAsignaciones() {
                       <td className="px-4 py-3">{item.asunto}</td>
                       <td className="px-4 py-3">{item.tiempo_espera_horas} h</td>
                       <td className="px-4 py-3">{item.fecha_respuesta ?? "—"}</td>
+                      <td className="px-4 py-3">{formatMinutos(item.tiempo_atencion_acumulado_minutos)}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`rounded-lg border px-2 py-1 text-xs font-semibold ${ESTADO_COLOR[item.estado]}`}
@@ -172,7 +209,31 @@ export default function MisAsignaciones() {
               <div><b>Hora de ingreso</b><div>{selected.hora_ingreso}</div></div>
               <div><b>Tiempo de espera</b><div>{selected.tiempo_espera_horas} h</div></div>
               <div><b>Fecha límite de respuesta</b><div>{selected.fecha_respuesta ?? "—"}</div></div>
+              <div><b>Tiempo total de atención (acumulado)</b><div>{formatMinutos(selected.tiempo_atencion_acumulado_minutos)}</div></div>
             </div>
+
+            <label className="mb-4 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4"
+                checked={selected.plazo_ampliado}
+                disabled={selected.plazo_ampliado}
+                onChange={(e) => setSelected({ ...selected, plazo_ampliado: e.target.checked })}
+              />
+              <span>
+                {selected.plazo_ampliado ? (
+                  <span className="font-semibold text-amber-800">
+                    Plazo ampliado — ya se sumaron 15 días hábiles más a la fecha límite.
+                  </span>
+                ) : (
+                  <>
+                    <span className="font-semibold text-amber-800">Necesito más tiempo. </span>
+                    Al marcar y guardar, la fecha límite de respuesta se amplía 15 días hábiles
+                    más desde hoy. Solo se puede usar una vez por caso.
+                  </>
+                )}
+              </span>
+            </label>
 
             <div className="grid gap-4 md:grid-cols-2">
               <Select
@@ -219,7 +280,15 @@ export default function MisAsignaciones() {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={handleFinalizarSesion}
+                disabled={finalizandoSesion}
+                className="mr-auto border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+              >
+                {finalizandoSesion ? "Registrando..." : "✓ Finalizar atención de hoy"}
+              </Button>
               <Button variant="ghost" onClick={() => setSelected(null)}>Cancelar</Button>
               <Button onClick={guardarSeguimiento}>Guardar seguimiento</Button>
             </div>

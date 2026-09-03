@@ -28,6 +28,9 @@ const SELECT_FIELDS = `
   to_char(a.hora_atencion, 'HH24:MI') as hora_atencion,
   a.tiempo_espera_horas,
   to_char(a.fecha_respuesta, 'YYYY-MM-DD') as fecha_respuesta,
+  a.plazo_ampliado,
+  a.tiempo_atencion_acumulado_minutos,
+  a.ultima_sesion_fin,
   a.asignado_a,
   u.full_name as asignado_a_nombre,
   a.estado,
@@ -243,7 +246,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const current = await db().query(
-        `select asignado_a from public.atenciones where id = $1`,
+        `select asignado_a, plazo_ampliado, tiempo_atencion_acumulado_minutos from public.atenciones where id = $1`,
         [id]
       );
 
@@ -255,6 +258,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (requester.role !== "admin" && !isOwner) {
         throw new HttpError(403, "Solo el funcionario asignado puede actualizar este registro");
+      }
+
+      // Acción especial: "Finalizar atención de hoy" — registra cuánto duró
+      // esta sesión y la suma al acumulado, sin tocar el estado del caso.
+      if (body.finalizar_sesion === true) {
+        const sesionInicio = new Date(String(body.sesion_inicio ?? ""));
+
+        if (isNaN(sesionInicio.getTime())) {
+          return sendJson(res, 400, { error: "sesion_inicio inválido" });
+        }
+
+        const minutosSesion = Math.max(
+          0,
+          Math.round((Date.now() - sesionInicio.getTime()) / 60000)
+        );
+
+        const nuevoAcumulado =
+          Number(current.rows[0].tiempo_atencion_acumulado_minutos ?? 0) + minutosSesion;
+
+        await db().query(
+          `
+            update public.atenciones
+            set tiempo_atencion_acumulado_minutos = $1, ultima_sesion_fin = now()
+            where id = $2
+          `,
+          [nuevoAcumulado, id]
+        );
+
+        const updatedSesion = await db().query(
+          `
+            select ${SELECT_FIELDS}
+            from public.atenciones a
+            left join public.app_users u on u.id = a.asignado_a
+            where a.id = $1
+          `,
+          [id]
+        );
+
+        return sendJson(res, 200, {
+          ok: true,
+          item: updatedSesion.rows[0],
+          minutosSesion,
+        });
       }
 
       if (body.estado !== undefined && !ESTADOS_VALIDOS.includes(String(body.estado))) {
@@ -279,6 +325,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           params.push(body[field]);
           sets.push(`${field} = $${params.length}`);
         }
+      }
+
+      // "Necesito más tiempo": solo la primera vez que se marca (evita que
+      // se reinicie el plazo cada vez que se guarda el seguimiento).
+      if (body.plazo_ampliado === true && !current.rows[0].plazo_ampliado) {
+        const fechaHoy = fechaColombiaHoy();
+        const [y, m, d] = fechaHoy.split("-").map(Number);
+        const nuevaFechaRespuesta = addBusinessDaysColombia(
+          new Date(y, m - 1, d),
+          DIAS_HABILES_RESPUESTA
+        );
+
+        params.push(true);
+        sets.push(`plazo_ampliado = $${params.length}`);
+        params.push(nuevaFechaRespuesta);
+        sets.push(`fecha_respuesta = $${params.length}`);
       }
 
       if (body.estado === "FINALIZADO") {

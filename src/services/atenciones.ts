@@ -59,13 +59,28 @@ export async function listarAtenciones(filtros?: {
 export async function actualizarSeguimiento(
   id: string,
   cambios: Partial<
-    Pick<Atencion, "estado" | "saludo" | "accion_realizada" | "observaciones" | "expediente">
+    Pick<
+      Atencion,
+      "estado" | "saludo" | "accion_realizada" | "observaciones" | "expediente" | "plazo_ampliado"
+    >
   >
 ): Promise<{ ok: true; item: Atencion }> {
   const res = await fetch("/api/atenciones", {
     method: "PATCH",
     headers: authHeaders(true),
     body: JSON.stringify({ id, ...cambios }),
+  });
+  return parseResponse(res);
+}
+
+export async function finalizarSesionAtencion(
+  id: string,
+  sesionInicioISO: string
+): Promise<{ ok: true; item: Atencion; minutosSesion: number }> {
+  const res = await fetch("/api/atenciones", {
+    method: "PATCH",
+    headers: authHeaders(true),
+    body: JSON.stringify({ id, finalizar_sesion: true, sesion_inicio: sesionInicioISO }),
   });
   return parseResponse(res);
 }
