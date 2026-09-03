@@ -55,6 +55,16 @@ export default function HiloSeguimientos({
   }, [atencionId]);
 
   async function handleGuardar() {
+    if (
+      !nuevo.sintesis_caso.trim() ||
+      !nuevo.pregunta_problema.trim() ||
+      !nuevo.metodologia.trim() ||
+      !nuevo.accion_realizada.trim()
+    ) {
+      setError("Síntesis, Pregunta/problema, Metodología y Acción realizada son obligatorios.");
+      return;
+    }
+
     setGuardando(true);
     setError(null);
     try {
@@ -69,6 +79,12 @@ export default function HiloSeguimientos({
       setGuardando(false);
     }
   }
+
+  const puedeGuardar =
+    nuevo.sintesis_caso.trim().length > 0 &&
+    nuevo.pregunta_problema.trim().length > 0 &&
+    nuevo.metodologia.trim().length > 0 &&
+    nuevo.accion_realizada.trim().length > 0;
 
   return (
     <div>
@@ -142,7 +158,7 @@ export default function HiloSeguimientos({
       {mostrarForm && (
         <div className="mt-3 space-y-2 rounded-xl border border-slate-200 bg-white p-3">
           <div>
-            <div className="mb-1 text-xs font-medium text-slate-600">Síntesis del caso</div>
+            <div className="mb-1 text-xs font-medium text-slate-600">Síntesis del caso *</div>
             <textarea
               className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
               rows={2}
@@ -152,7 +168,7 @@ export default function HiloSeguimientos({
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-medium text-slate-600">Pregunta / problema</div>
+            <div className="mb-1 text-xs font-medium text-slate-600">Pregunta / problema *</div>
             <textarea
               className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
               rows={2}
@@ -162,7 +178,7 @@ export default function HiloSeguimientos({
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-medium text-slate-600">Metodología</div>
+            <div className="mb-1 text-xs font-medium text-slate-600">Metodología *</div>
             <textarea
               className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
               rows={2}
@@ -172,7 +188,7 @@ export default function HiloSeguimientos({
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-medium text-slate-600">Acción realizada</div>
+            <div className="mb-1 text-xs font-medium text-slate-600">Acción realizada *</div>
             <textarea
               className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
               rows={2}
@@ -191,25 +207,29 @@ export default function HiloSeguimientos({
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMostrarForm(false);
-                setNuevo(emptyNuevo);
-              }}
-              className="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              disabled={guardando}
-              onClick={handleGuardar}
-              className="rounded-lg bg-brand-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-            >
-              {guardando ? "Guardando..." : "Guardar visita"}
-            </button>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-xs text-slate-400">* Campos obligatorios</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMostrarForm(false);
+                  setNuevo(emptyNuevo);
+                  setError(null);
+                }}
+                className="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={guardando || !puedeGuardar}
+                onClick={handleGuardar}
+                className="rounded-lg bg-brand-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                {guardando ? "Guardando..." : "Guardar visita"}
+              </button>
+            </div>
           </div>
         </div>
       )}

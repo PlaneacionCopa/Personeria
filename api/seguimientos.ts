@@ -69,11 +69,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const tieneContenido =
-        body.sintesis_caso || body.pregunta_problema || body.metodologia || body.accion_realizada;
+        body.sintesis_caso?.trim() &&
+        body.pregunta_problema?.trim() &&
+        body.metodologia?.trim() &&
+        body.accion_realizada?.trim();
 
       if (!tieneContenido) {
         return sendJson(res, 400, {
-          error: "Agrega al menos un campo (síntesis, pregunta, metodología o acción realizada)",
+          error: "Síntesis, Pregunta/problema, Metodología y Acción realizada son obligatorios.",
         });
       }
 
