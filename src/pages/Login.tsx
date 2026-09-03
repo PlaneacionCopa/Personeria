@@ -59,10 +59,10 @@ export default function Login() {
     }
   }
 
-  return (
+   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${fondoPersoneria})` }}
+      className="min-h-screen bg-cover bg-no-repeat"
+      style={{ backgroundImage: `url(${fondoPersoneria})`, backgroundPosition: "center 30%" }}
     >
       <div className="min-h-screen bg-gradient-to-br from-brand-900/90 via-brand-800/85 to-brand-700/80">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 lg:grid-cols-2">
