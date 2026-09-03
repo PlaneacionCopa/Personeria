@@ -42,7 +42,7 @@ export default function Create() {
   const [funcionarios, setFuncionarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
   const [doneId, setDoneId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); 
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [form, setForm] = useState<NuevaAtencionInput>(emptyForm);
 
