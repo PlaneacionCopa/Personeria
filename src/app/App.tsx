@@ -55,10 +55,10 @@ export default function App() {
         }
       />
 
-      <Route
+     <Route
         path="/buscar"
         element={
-          <RequireAuth roles={["secretario", "admin"]}>
+          <RequireAuth roles={["secretario", "admin", "funcionario"]}>
             <Buscar />
           </RequireAuth>
         }

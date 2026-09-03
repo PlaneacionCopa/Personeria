@@ -315,13 +315,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const sets: string[] = [];
       const params: any[] = [];
 
-      const editable = [
-        "estado",
-        "saludo",
-        "accion_realizada",
-        "observaciones",
-        "expediente",
-      ];
+            const editable = ["estado", "expediente"];
 
       for (const field of editable) {
         if (body[field] !== undefined) {

@@ -4,7 +4,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import Select from "../components/Select";
-import AdjuntosPanel from "../components/AdjuntosPanel";
+import HiloSeguimientos from "../components/HiloSeguimientos";
 import {
   actualizarSeguimiento,
   finalizarSesionAtencion,
@@ -18,6 +18,11 @@ function formatMinutos(min: number) {
   const m = min % 60;
   if (h === 0) return `${m} min`;
   return `${h} h ${m} min`;
+}
+
+function truncar(text: string | null, max = 28) {
+  if (!text) return "—";
+  return text.length > max ? text.slice(0, max) + "..." : text;
 }
 
 const TABS: { value: Estado | "TODOS"; label: string }[] = [
@@ -68,23 +73,19 @@ export default function MisAsignaciones() {
     setSessionStart(new Date());
   }
 
-  async function guardarSeguimiento() {
+  async function guardarCabecera() {
     if (!selected) return;
 
     try {
       await actualizarSeguimiento(selected.id, {
         estado: selected.estado,
-        saludo: selected.saludo ?? "",
-        accion_realizada: selected.accion_realizada ?? "",
-        observaciones: selected.observaciones ?? "",
         expediente: selected.expediente ?? "",
         plazo_ampliado: selected.plazo_ampliado,
       });
 
-      setSelected(null);
       load();
     } catch (e: any) {
-      alert(e?.message ?? "Error guardando seguimiento");
+      alert(e?.message ?? "Error guardando");
     }
   }
 
@@ -98,7 +99,6 @@ export default function MisAsignaciones() {
         `Atención de hoy registrada: ${formatMinutos(r.minutosSesion)}.\n` +
           `Total acumulado en este caso: ${formatMinutos(r.item.tiempo_atencion_acumulado_minutos)}.`
       );
-      setSelected(null);
       load();
     } catch (e: any) {
       alert(e?.message ?? "Error registrando la atención de hoy");
@@ -114,7 +114,7 @@ export default function MisAsignaciones() {
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h2 className="text-2xl font-black text-brand-800">Mis asignaciones</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Casos que te asignó el secretario. Actualiza el estado y agrega el seguimiento.
+          Casos que te asignó el secretario. Abre un caso para ver el hilo de visitas y agregar una nueva.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -150,7 +150,7 @@ export default function MisAsignaciones() {
                     <th className="px-4 py-3 text-left font-semibold">Nombre</th>
                     <th className="px-4 py-3 text-left font-semibold">Asunto</th>
                     <th className="px-4 py-3 text-left font-semibold">Resp. límite</th>
-                    <th className="px-4 py-3 text-left font-semibold">T. atención</th>
+                    <th className="px-4 py-3 text-left font-semibold">Link expediente</th>
                     <th className="px-4 py-3 text-left font-semibold">Estado</th>
                     <th className="px-4 py-3 text-left font-semibold">Acción</th>
                   </tr>
@@ -163,7 +163,21 @@ export default function MisAsignaciones() {
                       <td className="px-4 py-3">{item.nombre_completo}</td>
                       <td className="px-4 py-3">{item.asunto}</td>
                       <td className="px-4 py-3">{item.fecha_respuesta ?? "—"}</td>
-                      <td className="px-4 py-3">{formatMinutos(item.tiempo_atencion_acumulado_minutos)}</td>
+                      <td className="px-4 py-3">
+{item.expediente ? (
+                          
+                            <a href={item.expediente}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-brand-800 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {truncar(item.expediente)}
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <span
                           className={`rounded-lg border px-2 py-1 text-xs font-semibold ${ESTADO_COLOR[item.estado]}`}
@@ -238,7 +252,7 @@ export default function MisAsignaciones() {
               <Select
                 label="Estado"
                 value={selected.estado}
-                onChange={(e) => setSelected({ ...selected, estado: e.target.value as Estado })}
+                onChange={(e) => setSelected({...selected, estado: e.target.value as Estado })}
               >
                 {(tips?.estado || ["ASIGNADO", "EN_SEGUIMIENTO", "FINALIZADO"]).map((v) => (
                   <option key={v} value={v}>{v.replace("_", " ")}</option>
@@ -246,41 +260,19 @@ export default function MisAsignaciones() {
               </Select>
 
               <Input
-                label="Expediente"
+                label="Link expediente"
+                placeholder="https://..."
                 value={selected.expediente ?? ""}
-                onChange={(e) => setSelected({ ...selected, expediente: e.target.value })}
+                onChange={(e) => setSelected({...selected, expediente: e.target.value })}
               />
+            </div>
 
-              <Input
-                label="Saludo"
-                className="md:col-span-2"
-                value={selected.saludo ?? ""}
-                onChange={(e) => setSelected({ ...selected, saludo: e.target.value })}
-              />
-
-              <div className="md:col-span-2">
-                <div className="mb-1 text-sm font-medium text-slate-700">Acción realizada</div>
-                <textarea
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-                  rows={3}
-                  value={selected.accion_realizada ?? ""}
-                  onChange={(e) => setSelected({ ...selected, accion_realizada: e.target.value })}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="mb-1 text-sm font-medium text-slate-700">Observaciones</div>
-                <textarea
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-                  rows={4}
-                  value={selected.observaciones ?? ""}
-                  onChange={(e) => setSelected({ ...selected, observaciones: e.target.value })}
-                />
-              </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={guardarCabecera}>Guardar cambios del caso</Button>
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-4">
-              <AdjuntosPanel atencionId={selected.id} puedeSubir />
+              <HiloSeguimientos atencionId={selected.id} onNuevaVisita={load} />
             </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">
@@ -292,8 +284,7 @@ export default function MisAsignaciones() {
               >
                 {finalizandoSesion ? "Registrando..." : "✓ Finalizar atención de hoy"}
               </Button>
-              <Button variant="ghost" onClick={() => setSelected(null)}>Cancelar</Button>
-              <Button onClick={guardarSeguimiento}>Guardar seguimiento</Button>
+              <Button variant="ghost" onClick={() => setSelected(null)}>Cerrar</Button>
             </div>
           </div>
         </div>

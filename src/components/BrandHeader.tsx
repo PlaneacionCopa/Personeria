@@ -95,10 +95,17 @@ export default function BrandHeader() {
             </>
           )}
 
-          {(role === "funcionario" || role === "admin") && (
-            <Button variant="ghost" onClick={() => go("/asignaciones")}>
-              Mis asignaciones
-            </Button>
+                   {(role === "funcionario" || role === "admin") && (
+            <>
+              <Button variant="ghost" onClick={() => go("/asignaciones")}>
+                Mis asignaciones
+              </Button>
+              {role === "funcionario" && (
+                <Button variant="ghost" onClick={() => go("/buscar")}>
+                  Buscar
+                </Button>
+              )}
+            </>
           )}
 
           {role === "admin" && (
