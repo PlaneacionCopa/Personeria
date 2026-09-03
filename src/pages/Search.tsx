@@ -161,8 +161,8 @@ export default function Search() {
               <div><b>Asunto</b><div>{selected.asunto}</div></div>
               <div><b>Hora de ingreso</b><div>{selected.hora_ingreso}</div></div>
               <div><b>Hora de atención</b><div>{selected.hora_atencion}</div></div>
-              <div><b>Tiempo de espera</b><div>{selected.tiempo_espera_horas} h</div></div>
               <div><b>Fecha límite de respuesta</b><div>{selected.fecha_respuesta ?? "—"}</div></div>
+              <div><b>Plazo ampliado</b><div>{selected.plazo_ampliado ? "Sí" : "No"}</div></div>
               <div><b>Asignado a</b><div>{selected.asignado_a_nombre}</div></div>
               <div><b>Estado</b><div>{ESTADO_LABEL[selected.estado]}</div></div>
 
