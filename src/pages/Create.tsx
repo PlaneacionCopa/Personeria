@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BrandHeader from "../components/BrandHeader";
 import Card from "../components/Card";
 import Input from "../components/Input";
@@ -6,6 +6,7 @@ import Select from "../components/Select";
 import Button from "../components/Button";
 import { crearAtencion, getTipificaciones, searchByDocumento } from "../services/atenciones";
 import { listarUsuarios } from "../services/usuarios";
+import { subirArchivo } from "../services/archivos";
 import type { NuevaAtencionInput, Tipificaciones, Usuario } from "../types/atencion";
 
 function nowHHMM() {
@@ -18,6 +19,12 @@ function nowHHMM() {
 function upper(value: string) {
   return value.toUpperCase();
 }
+
+type ArchivoPendiente = {
+  key: string;
+  file: File;
+  descripcion: string;
+};
 
 const emptyForm: NuevaAtencionInput = {
   documento: "",
@@ -42,9 +49,12 @@ export default function Create() {
   const [funcionarios, setFuncionarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
   const [doneId, setDoneId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null); 
+  const [error, setError] = useState<string | null>(null);
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [form, setForm] = useState<NuevaAtencionInput>(emptyForm);
+  const [pendientes, setPendientes] = useState<ArchivoPendiente[]>([]);
+  const [subiendoArchivos, setSubiendoArchivos] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getTipificaciones()
@@ -90,6 +100,28 @@ export default function Create() {
     }
   }
 
+  function handleAgregarArchivos(files: FileList | null) {
+    if (!files || files.length === 0) return;
+
+    const nuevos: ArchivoPendiente[] = Array.from(files).map((file) => ({
+      key: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+      file,
+      descripcion: "",
+    }));
+
+    setPendientes((prev) => [...prev, ...nuevos]);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function actualizarDescripcion(key: string, descripcion: string) {
+    setPendientes((prev) => prev.map((p) => (p.key === key ? { ...p, descripcion } : p)));
+  }
+
+  function quitarPendiente(key: string) {
+    setPendientes((prev) => prev.filter((p) => p.key !== key));
+  }
+
   const canSubmit = useMemo(() => {
     return (
       form.documento.trim().length > 0 &&
@@ -118,12 +150,34 @@ export default function Create() {
       const r = await crearAtencion(payload);
       setDoneId(r.id);
 
+      if (pendientes.length > 0) {
+        setSubiendoArchivos(true);
+        for (const p of pendientes) {
+          try {
+            await subirArchivo(r.id, p.file, p.descripcion);
+          } catch (e: any) {
+            console.error(`Error subiendo ${p.file.name}:`, e);
+            setError(
+              `El registro se guardó, pero "${p.file.name}" no se pudo adjuntar: ${e?.message ?? "error desconocido"}`
+            );
+          }
+        }
+        setSubiendoArchivos(false);
+      }
+
       setForm({ ...emptyForm, hora_ingreso: nowHHMM() });
+      setPendientes([]);
     } catch (e: any) {
       setError(e?.message ?? "Error guardando.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function formatBytes(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   return (
@@ -248,6 +302,17 @@ export default function Create() {
               ))}
             </Select>
 
+            <Select
+              label="Canal de ingreso"
+              value={form.canal}
+              onChange={(e) => setForm({ ...form, canal: e.target.value })}
+            >
+              <option value="">Seleccione...</option>
+              {(tips?.canal || []).map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </Select>
+
             <Input
               label="Hora de ingreso"
               type="time"
@@ -267,12 +332,64 @@ export default function Create() {
             </Select>
           </div>
 
+          <div className="mt-6 border-t border-slate-100 pt-4">
+            <div className="mb-2 text-sm font-semibold text-slate-700">
+              Documentos adjuntos (opcional)
+            </div>
+            <p className="mb-3 text-xs text-slate-500">
+              PDF, fotos u otros documentos relacionados. Máximo 8 MB por archivo. Se suben al
+              guardar el registro.
+            </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={(e) => handleAgregarArchivos(e.target.files)}
+              className="block text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-800 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
+            />
+
+            {pendientes.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {pendientes.map((p) => (
+                  <div
+                    key={p.key}
+                    className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-slate-700">
+                        {p.file.name}{" "}
+                        <span className="text-xs font-normal text-slate-400">
+                          ({formatBytes(p.file.size)})
+                        </span>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="¿Qué es este archivo? (ej: cédula, radicado...)"
+                      value={p.descripcion}
+                      onChange={(e) => actualizarDescripcion(p.key, e.target.value)}
+                      className="min-w-[220px] flex-1 rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => quitarPendiente(p.key)}
+                      className="text-sm text-red-500 hover:text-red-700"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Button disabled={!canSubmit || loading} onClick={handleSubmit}>
-              {loading ? "Guardando..." : "Guardar y asignar"}
+              {loading ? "Guardando..." : subiendoArchivos ? "Subiendo archivos..." : "Guardar y asignar"}
             </Button>
 
-            {doneId && (
+            {doneId && !error && (
               <div className="rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-sm text-green-700">
                 Guardado y asignado correctamente.
               </div>
