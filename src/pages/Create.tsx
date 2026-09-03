@@ -32,6 +32,7 @@ const emptyForm: NuevaAtencionInput = {
   barrio_vereda: "",
   asunto: "",
   tipo_caso: "NUEVO",
+  canal: "",
   hora_ingreso: nowHHMM(),
   asignado_a: "",
 };
