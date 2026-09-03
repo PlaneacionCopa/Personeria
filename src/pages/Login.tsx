@@ -4,7 +4,6 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
-import logoPersoneria from "../../logos/logo-personeria.png";
 import fondoPersoneria from "../../logos/personeria-fondo.jpeg";
 
 export default function Login() {
@@ -59,36 +58,13 @@ export default function Login() {
     }
   }
 
-   return (
+  return (
     <div
       className="min-h-screen bg-cover bg-no-repeat"
       style={{ backgroundImage: `url(${fondoPersoneria})`, backgroundPosition: "center 30%" }}
     >
-      <div className="min-h-screen bg-gradient-to-br from-brand-900/90 via-brand-800/85 to-brand-700/80">
-<div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-40 pb-12 lg:grid-cols-2">
-          <div className="text-white">
-          <div className="mb-6 flex items-center gap-6">
-            <img
-              src={logoPersoneria}
-              alt="Personería Municipal de Copacabana"
-              className="h-14 object-contain"
-            />
-          </div>
-
-          <h1 className="text-4xl font-black tracking-tight">
-            Atención de Usuarios
-            <span className="mt-2 block text-2xl font-semibold text-white/80">
-              Registro • Asignación • Seguimiento
-            </span>
-          </h1>
-
-          <p className="mt-4 max-w-xl text-white/80">
-            Personería Municipal de Copacabana. Ingresa con tu usuario para
-            registrar, asignar o hacer seguimiento a las atenciones.
-          </p>
-        </div>
-
-        <Card className="p-6 lg:p-8">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-900/90 via-brand-800/85 to-brand-700/80 px-4 pt-40 pb-12">
+        <Card className="w-full max-w-md p-6 lg:p-8">
           <div className="text-xl font-black text-brand-800">Iniciar sesión</div>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -107,7 +83,6 @@ export default function Login() {
             </Button>
           </form>
         </Card>
-        </div>
       </div>
     </div>
   );
